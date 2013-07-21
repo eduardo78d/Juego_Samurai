@@ -11,6 +11,7 @@ from random import randint
 width = 1190
 height = 635
 Nivel = 0
+
 ListaEnemigos=[]
 
 
@@ -78,6 +79,8 @@ class Fondo(pygame.sprite.Sprite):
 	def update(self,Pantalla,x,y):
 		#self.rect.move_ip(-x,-y)
 		Pantalla.blit(self.imagenFondo, self.rect)
+
+	
 
 class Jugador(pygame.sprite.Sprite):
 	"Cargando a Jugador"
@@ -174,21 +177,40 @@ class Enemigo(pygame.sprite.Sprite):
 		self.vida = 50
 		self.Orientacion = 0
 		self.Arriba = True
-		self.velocidad = v
+		self.Izquierda = True
+		self.velocidad = 15
 		self.VIVO = True
+		self.comportamientoDerecha = False
 
 	def update(self, superficie):
-		if self.VIVO == True:
-			if self.Arriba == True:
-				if self.rect.top >0 :
-					self.rect.top = self.rect.top -self.velocidad
-				if self.rect.top < 10:
-					self.Arriba= False
-			elif self.Arriba == False:
-				if self.rect.top >=0:
-					self.rect.top = self.rect.top+self.velocidad
-				if self.rect.top >550:
-					self.Arriba = True
+		if self.comportamientoDerecha== False:
+			if self.VIVO == True:
+				if self.Arriba == True:
+					if self.rect.top >0 :
+						self.rect.top = self.rect.top -self.velocidad
+					if self.rect.top < 10:
+						self.Arriba= False
+				elif self.Arriba == False:
+					if self.rect.top >=0:
+						self.rect.top = self.rect.top+self.velocidad
+					if self.rect.top >550:
+						self.Arriba = True
+		else:
+			if self.VIVO == True:
+				if self.Izquierda == True:
+					if self.rect.left > 500:
+						self.rect.left = self.rect.left + self.velocidad
+					if self.rect.left >1400:
+						self.Izquierda= False
+				else:
+					if self.rect.left >= 500:
+						self.rect.left = self.rect.left -self.velocidad
+					if self.rect.left < 600:
+						self.Izquierda= True
+
+
+
+
 		self.posy = self.rect.top
 		self.Dibujar(superficie)
 
@@ -232,8 +254,6 @@ def Colisiones(Jugador, Enemigo):
 	#if Jugador.rect.colliderect(Enemigo.rect):
 		return True
 
-
-
 def juego():
 	pygame.init()
 	Pantalla= pygame.display.set_mode((width,height),0,0)
@@ -244,7 +264,7 @@ def juego():
 	Samuarai = Jugador()
 
 
-	velocidad =8
+	velocidad =10
 	reloj = pygame.time.Clock()
 	Jugar = True
 	vx, vy = 0,0
@@ -254,9 +274,8 @@ def juego():
 
 	ListaArmas= []
 	
-	siguienteNivel = Nivel
 	sonidoAtaque = pygame.mixer.Sound("sonido/Nmoes1.mid")
-
+	nivelActual = 0
 	while Jugar:
 		contador +=1
 		if contador >1:
@@ -305,12 +324,15 @@ def juego():
 		fondo.update(Pantalla,vx,vy)
 		Samuarai.update(Pantalla,vx,vy, contador )
 		
-		#Musica de niveles y enemigos de niveles
-		if siguienteNivel== Nivel:
-			Sonidos()
-			print "Entro "
-			CreadorEnemigos()
-			siguienteNivel= siguienteNivel+1
+		"""Aqui ya podemos hacer el codigo que necesitemos """
+	
+		if nivelActual==0 or nivelActual==1:
+			if len(ListaEnemigos)==0:
+				actualizarNivel(nivelActual)
+				nivelActual=1
+				
+
+
 
 		for Enemigos in ListaEnemigos:
 			if Colisiones(Samuarai, Enemigos):
@@ -322,8 +344,6 @@ def juego():
 					x.update(Pantalla)
 				else:
 					ListaEnemigos.remove(x)
-		else:
-			Nivel= Nivel+1
 
 		if len(ListaArmas) >0:
 			for x in ListaArmas:
@@ -331,42 +351,49 @@ def juego():
 				if(x.posx< 0 or x.posx >3000):
 					ListaArmas.remove(x)	
 					print "Eliminado"
-				else:
-					if len(ListaEnemigos)>0:
-						for e in ListaEnemigos:
-							if Colisiones(x,e):
-								ListaArmas.remove(x)
+		if len(ListaArmas)>0 and len(ListaEnemigos)>0:
+			for x in ListaArmas:
+				for y in ListaEnemigos:
+					if Colisiones(x,y):
+						print golpeo
+						y.vida= y.vida-5
+						ListaArmas.remove(x)
 
 		pygame.display.update()
 
 	pygame.quit()
 
 ###############################################
+def actualizarNivel(Nivel):
+	Sonidos(Nivel)
+	CreadorEnemigos(Nivel)
 
-def Sonidos():
+def Sonidos(Nivel):
 	if Nivel==0:
-		IntroGoku = os.path.join("sonido", "juan.mid")
+		IntroGoku = os.path.join("Sonido", "Goku.mid")
 		pygame.mixer.music.load(IntroGoku)
 	elif Nivel==1:
-		IntroGoku = os.path.join("sonido", "juan.mid")
+		IntroGoku = os.path.join("Sonido", "juan.mid")
 		pygame.mixer.music.load(IntroGoku)
 
 	pygame.mixer.music.play(2)
 
-def CreadorEnemigos():
+def CreadorEnemigos(Nivel):
 	if Nivel ==0 :
 		for w in range(2):
-			x = randint(400,900)
+			x = randint(600,1000)
 			v= randint(2,10)
-			y = randint(2,800)
+			y = randint(2,600)
 			EnemigoVolador = Enemigo(x,y,v)
 			ListaEnemigos.append(EnemigoVolador)
 	elif Nivel== 1:
+			print "Entro"
 			for w in range(4):
-				x = randint(400,900)
+				x = randint(1300,1800)
 				v= randint(2,10)
-				y = randint(2,800)
+				y = randint(2,600)
 				EnemigoVolador = Enemigo(x,y,v)
+				EnemigoVolador.comportamientoDerecha= True
 				ListaEnemigos.append(EnemigoVolador)
 
 def comenzar_nuevo_juego():
